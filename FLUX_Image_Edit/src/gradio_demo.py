@@ -48,6 +48,7 @@ class FluxEditor:
         self.offload = args.offload
         self.name = args.name
         self.is_schnell = args.name == "flux-schnell"
+        self.lora_path = args.lora_path  #Get LoRA path
 
         self.feature_path = 'feature'
         self.output_dir = 'result'
@@ -60,7 +61,7 @@ class FluxEditor:
         # init all components
         self.t5 = load_t5(self.device, max_length=256 if self.name == "flux-schnell" else 512)
         self.clip = load_clip(self.device)
-        self.model = load_flow_model(self.name, device="cpu" if self.offload else self.device)
+        self.model = load_flow_model(self.name, device="cpu" if self.offload else self.device, lora_path=self.lora_path)  # pass LoRA path here
         self.ae = load_ae(self.name, device="cpu" if self.offload else self.device)
         self.t5.eval()
         self.clip.eval()
@@ -216,28 +217,4 @@ def create_demo(model_name: str, device: str = "cuda" if torch.cuda.is_available
                     # seed = gr.Textbox(0, label="Seed (-1 for random)", visible=False)
                     # add_sampling_metadata = gr.Checkbox(label="Add sampling parameters to metadata?", value=False)
                 
-                output_image = gr.Image(label="Generated Image")
-
-        generate_btn.click(
-            fn=editor.edit,
-            inputs=[init_image, source_prompt, target_prompt, num_steps, inject_step, guidance],
-            outputs=[output_image]
-        )
-
-
-    return demo
-
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Flux")
-    parser.add_argument("--name", type=str, default="flux-dev", choices=list(configs.keys()), help="Model name")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device to use")
-    parser.add_argument("--offload", action="store_true", help="Offload model to CPU when not in use")
-    parser.add_argument("--share", action="store_true", help="Create a public link to your demo")
-
-    parser.add_argument("--port", type=int, default=41035)
-    args = parser.parse_args()
-
-    demo = create_demo(args.name, args.device, args.offload)
-    demo.launch(server_name='0.0.0.0', share=args.share, server_port=args.port)
+                
