@@ -75,6 +75,7 @@ def main(
     output_dir = args.output_dir
     num_steps = args.num_steps
     offload = args.offload
+    lora_path = args.lora_path  # Get LoRA path from arguments
 
     nsfw_classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection", device=device)
 
@@ -89,7 +90,7 @@ def main(
     # init all components
     t5 = load_t5(torch_device, max_length=256 if name == "flux-schnell" else 512)
     clip = load_clip(torch_device)
-    model = load_flow_model(name, device="cpu" if offload else torch_device)
+    model = load_flow_model(name, device="cpu" if offload else torch_device, lora_path=lora_path) #Pass LoRA path
     ae = load_ae(name, device="cpu" if offload else torch_device)
 
     if offload:
@@ -242,6 +243,8 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', default='output', type=str,
                         help='the path of the edited image')
     parser.add_argument('--offload', action='store_true', help='set it to True if the memory of GPU is not enough')
+    parser.add_argument('--lora_path', type=str, default=None,  # Add LoRA path argument
+                        help='Path to the LoRA .safetensors file.')
 
     args = parser.parse_args()
 
