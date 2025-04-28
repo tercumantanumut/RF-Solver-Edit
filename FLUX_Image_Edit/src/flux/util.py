@@ -21,6 +21,8 @@ class ModelSpec:
     repo_id: str | None
     repo_flow: str | None
     repo_ae: str | None
+    lora_path: str | None  # Add LoRA path
+
 
 configs = {
     "flux-dev": ModelSpec(
@@ -54,6 +56,7 @@ configs = {
             scale_factor=0.3611,
             shift_factor=0.1159,
         ),
+        lora_path=None  # Initialize to None, will be set later
     ),
     "flux-schnell": ModelSpec(
         repo_id="black-forest-labs/FLUX.1-schnell",
@@ -86,6 +89,7 @@ configs = {
             scale_factor=0.3611,
             shift_factor=0.1159,
         ),
+        lora_path=None  # Initialize to None, will be set later
     ),
 }
 
@@ -101,7 +105,7 @@ def print_load_warning(missing: list[str], unexpected: list[str]) -> None:
         print(f"Got {len(unexpected)} unexpected keys:\n\t" + "\n\t".join(unexpected))
 
 
-def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download: bool = True):
+def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download: bool = True, lora_path: str | None = None): # Add lora_path
     # Loading Flux
     print("Init model")
     
@@ -123,6 +127,14 @@ def load_flow_model(name: str, device: str | torch.device = "cuda", hf_download:
         sd = load_sft(ckpt_path, device=str(device))
         missing, unexpected = model.load_state_dict(sd, strict=False, assign=True)
         print_load_warning(missing, unexpected)
+
+    # Load LoRA if provided
+    if lora_path is not None:
+        print(f"Loading LoRA from {lora_path}")
+        lora_sd = load_sft(lora_path, device=str(device))
+        missing, unexpected = model.load_state_dict(lora_sd, strict=False, assign=True)
+        print_load_warning(missing, unexpected)
+    
     return model
 
 
